@@ -10,11 +10,13 @@
       <form id="tags">
         <input type="text" v-model="newToDo" placeholder="Add a new to do..." @keypress.enter="addToDo"/>
         <div class="dropdownContainer">
-          <select v-model="selectedTag">
+          
+          <select name="category" v-model="selectedTag">
             <option value="" disabled>Choose category...</option>
             <option value="work">Work</option>
             <option value="school">School</option>
             <option value="personal">Personal</option>
+
           </select>
         </div>
         <button class="button-edit" @click="addToDo"><i class="fa-solid fa-plus"></i></button>
@@ -23,20 +25,14 @@
     
     <ToDoList
       :toDoList="toDoList"
-      @remove="removeToDo"
-      @edit="editToDo"
-      @save="saveToDo"
-      @cancel="cancelEdit"
-      @toggle="toggleDone"
       @updateList="updateToDoList"
-      @editTag="editTagChange"
     />
   </div>
   
 </template>
 
 <script setup>
-
+ import saveToLocalStorage from '~/utils/saveToLocalStorage';
 const newToDo = ref('');
 const toDoList = ref([]);
 const selectedTag = ref('');
@@ -51,72 +47,24 @@ const addToDo = (e) => {
       tag: selectedTag.value
     };
     toDoList.value.push(newToDoItem);
-    saveToLocalStorage();
+    saveToLocalStorage(toDoList.value);
     newToDo.value = '';
-    selectedTag.value = '';
   }
 };
-const editTagChange = (id, tag) => {
-  const todo = toDoList.value.find(todo => todo.id === id);
-  if (todo) {
-    todo.editTag = tag;
-  }
-}
+onMounted(() => {
+  fetchToDoList()
+})
 
 const fetchToDoList = () => {
   const storedTodos = localStorage.getItem('todos');
   toDoList.value = storedTodos ? JSON.parse(storedTodos) : [];
-  console.log(toDoList.value);
 };
+
 
 const updateToDoList = (updatedList) => {
   toDoList.value = updatedList;
-  saveToLocalStorage();
+  saveToLocalStorage(toDoList.value);
 };
 
-const saveToLocalStorage = () => {
-  localStorage.setItem('todos', JSON.stringify(toDoList.value));
-};
 
-const removeToDo = (id) => {
-  toDoList.value = toDoList.value.filter(todo => todo.id !== id);
-  saveToLocalStorage();
-};
-
-const editToDo = (id, tag) => {
-  const todo = toDoList.value.find(todo => todo.id === id);
-  if (todo) {
-    todo.editTag = tag;
-    todo.editText = todo.text;
-    todo.isEditing = true;
-  };
-};
-
-const saveToDo = (id) => {
-  const todo = toDoList.value.find(todo => todo.id === id);
-  if (todo) {
-    todo.tag = todo.editTag;
-    todo.text = todo.editText;
-    todo.isEditing = false;
-    saveToLocalStorage();
-  }
-};
-
-const cancelEdit = (id) => {
-  const todo = toDoList.value.find(todo => todo.id === id);
-  if (todo) {
-    todo.isEditing = false;
-    todo.editText = todo.text;
-  }
-};
-
-const toggleDone = (id) => {
-  const todo = toDoList.value.find(todo => todo.id === id);
-  if (todo) {
-    todo.done = !todo.done;
-    saveToLocalStorage();
-  }
-};
-
-onMounted(fetchToDoList);
 </script>
